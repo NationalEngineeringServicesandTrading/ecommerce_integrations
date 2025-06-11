@@ -386,6 +386,7 @@ class AmazonRepository:
 				make_address.insert()
 
 		order_id = order.get("AmazonOrderId")
+
 		so = frappe.db.get_value("Sales Order", filters={"amazon_order_id": order_id}, fieldname="name")
 
 		if so:
