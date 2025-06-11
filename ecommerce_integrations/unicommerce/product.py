@@ -2,7 +2,7 @@ from typing import List, NewType
 
 import frappe
 from frappe import _
-from frappe.utils import get_url, now
+from frappe.utils import get_url, now, to_markdown
 from frappe.utils.nestedset import get_root_of
 from stdnum.ean import is_valid as validate_barcode
 
@@ -39,6 +39,8 @@ UNI_TO_ERPNEXT_ITEM_MAPPING = {
 	"width": ITEM_WIDTH_FIELD,
 	"height": ITEM_HEIGHT_FIELD,
 	"batchGroupCode": ITEM_BATCH_GROUP_FIELD,
+	"maxRetailPrice": "standard_rate",
+	"costPrice": "valuation_rate",
 }
 
 ERPNEXT_TO_UNI_ITEM_MAPPING = {v: k for k, v in UNI_TO_ERPNEXT_ITEM_MAPPING.items()}
@@ -82,7 +84,7 @@ def import_product_from_unicommerce(sku: str, client: UnicommerceAPIClient = Non
 
 
 def _create_item_dict(uni_item):
-	""" Helper function to build item document fields"""
+	"""Helper function to build item document fields"""
 
 	item_dict = {"weight_uom": DEFAULT_WEIGHT_UOM}
 
@@ -270,6 +272,9 @@ def _build_unicommerce_item(item_code: ItemCode) -> JsonDict:
 
 	item_json["enabled"] = not bool(item.get("disabled"))
 
+	if item_json.get("description"):
+		item_json["description"] = to_markdown(item_json["description"]) or item_json["description"]
+
 	for barcode in item.barcodes:
 		if not item_json.get("scanIdentifier"):
 			# Set first barcode as scan identifier
@@ -284,6 +289,9 @@ def _build_unicommerce_item(item_code: ItemCode) -> JsonDict:
 	)
 	# append site prefix to image url
 	item_json["imageUrl"] = get_url(item.image)
+	item_json["maxRetailPrice"] = item.standard_rate
+	item_json["description"] = frappe.utils.strip_html_tags(item.description)
+	item_json["costPrice"] = item.valuation_rate
 
 	return item_json
 
