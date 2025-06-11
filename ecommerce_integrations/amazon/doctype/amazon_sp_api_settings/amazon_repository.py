@@ -277,7 +277,7 @@ class AmazonRepository:
 		self.create_address(order, customer_name)
 
 		order_id = order.get("AmazonOrderId")
-		sales_order = frappe.db.get_value(
+		sales_order = (
 			"Sales Order", filters={"amazon_order_id": order_id}, fieldname="name"
 		)
 
